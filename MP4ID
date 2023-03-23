@@ -1,0 +1,64 @@
+package app;
+
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfRect;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.objdetect.CascadeClassifier;
+import org.opencv.videoio.VideoCapture;
+import org.opencv.videoio.VideoWriter;
+
+public class MaritimeDetection {
+
+    public static void main(String[] args) {
+        // Load OpenCV library
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+        
+        // Load video file
+        VideoCapture capture = new VideoCapture("video.mp4");
+        
+        // Define the object detection classifier (e.g. Haar cascades)
+        CascadeClassifier classifier = new CascadeClassifier("haarcascade_ship.xml");
+        
+        // Create video writer to output annotated video
+        int codec = VideoWriter.fourcc('M', 'J', 'P', 'G');
+        double fps = capture.get(5);
+        int width = (int) capture.get(3);
+        int height = (int) capture.get(4);
+        VideoWriter writer = new VideoWriter("output.avi", codec, fps, new org.opencv.core.Size(width, height));
+        
+        // Loop through each frame of the video
+        while (capture.read()) {
+            // Read the frame
+            Mat frame = new Mat();
+            capture.read(frame);
+            
+            // Convert the frame to grayscale for processing
+            Mat grayFrame = new Mat();
+            Imgproc.cvtColor(frame, grayFrame, Imgproc.COLOR_BGR2GRAY);
+            
+            // Detect ships in the frame using the classifier
+            MatOfRect ships = new MatOfRect();
+            classifier.detectMultiScale(grayFrame, ships);
+            
+            // Loop through each detected ship and draw a rectangle around it
+            for (Rect rect : ships.toArray()) {
+                Imgproc.rectangle(frame, rect.tl(), rect.br(), new Scalar(0, 0, 255), 2);
+                
+                // Use additional processing to identify the military to which the ship belongs
+                // ...
+            }
+            
+            // Write the annotated frame to the output video
+            writer.write(frame);
+        }
+        
+        // Release resources
+        capture.release();
+        writer.release();
+    }
+
+}
+
